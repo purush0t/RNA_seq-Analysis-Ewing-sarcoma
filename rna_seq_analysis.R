@@ -216,3 +216,40 @@ down_genes <- merge(nr_counts2,downregular1$gene_id, by = 0) %>%
 down_genes <- down_genes[2:8]
 #plotting upregulated heat map
 pheatmap(down_genes,scale = 'row',main = "Downregulated Genes",cluster_rows = F,cluster_cols = F )
+
+
+
+#gene enrichment analysis using gseGO function from clusterprofiler
+
+EA <- data.frame(log2FoldChange = df_dseq$log2FoldChange,gene_id =  df_dseq$gene_id,ENSEMBL= df_dseq$ENSEMBL) %>%
+  `rownames<-`(.$ENSEMBL_ids) %>%
+  .[!duplicated(.[c("gene_id")]),] %>%
+  na.omit(.) %>%
+  `rownames<-`(.$gene_id)
+
+all(rownames(EA)) %in% all(EA$gene_id)
+
+#creating a vector for gse go function
+gid_lfc <- c("log2FoldChange" = EA[, 1])
+names(gid_lfc) <- EA[,2]
+gid_lfc <-sort(gid_lfc,decreasing = TRUE)
+
+gse <- gseGO(geneList=gid_lfc, 
+             ont = "ALL", 
+             keyType =  "SYMBOL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 1000, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = org.Hs.eg.db, 
+             pAdjustMethod = "none")
+
+gse_sum <- as.data.frame(summary(gse))
+head(gse_sum)
+
+#dot plot using the gene enrichment analysis data
+dotplot(gse,showCategory=6, title = "",
+        font.size = 10,
+        label_format = 30,
+        split=".sign")+facet_grid(.~.sign)
