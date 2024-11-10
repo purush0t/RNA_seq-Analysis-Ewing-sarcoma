@@ -1,15 +1,17 @@
+#packages required!
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
-BiocManager::install('org.Hs.eg.db')
-BiocManager::install('AnnotationDbi')
-BiocManager::install("dplyr")
-BiocManager::install("SummarizedEzperiment")
-BiocManager::install("DESeq2")
-BiocManager::install("pheatmap")
-BiocManager::install("EnhancedVolcano")
-BiocManager::install("clusterProfiler")
-BiocManager::install("enrichplot")
-
+  BiocManager::install('org.Hs.eg.db')
+  BiocManager::install('AnnotationDbi')
+  BiocManager::install("dplyr")
+  BiocManager::install("SummarizedEzperiment")
+  BiocManager::install("DESeq2")
+  BiocManager::install("pheatmap")
+  BiocManager::install("EnhancedVolcano")
+  BiocManager::install("clusterProfiler")
+  BiocManager::install("enrichplot")
+  BiocManager::install("apeglm")
+library(apeglm)
 library(dplyr)
 library(SummarizedExperiment)
 library(DESeq2)
@@ -26,6 +28,8 @@ library(tidyverse)
 library(pathview)
 library(DESeq2)
 
+  
+  
 # data is of object type:rangedsummarizedexperiment data 
 rse <- readRDS("EwS.rds")
 rse
@@ -150,6 +154,65 @@ ggplot(MAplot_results,aes(x=mean,y=lfc))+
   scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 40000, by = 40000)) +
   scale_y_continuous(limits = c(-3, 3), breaks = seq(-3, 3, by = 1))
 
+#LFC shrinkage MA PLOT
+resLFC <- lfcShrink(filter_dseqobj, coef="condition_shEF1_vs_shCTR", type="apeglm")
+plotMA(resLFC,ylim=c(-2,2), main ="LFC Shrinkage MA Plot" )
 
 
 
+#volcano plot
+#Volcano Plot for EWSR1-FLI1 knock-down vs control
+EnhancedVolcano(df_dseq,
+                lab = df_dseq$gene_id,
+                x = 'log2FoldChange',
+                y = 'pvalue',title = ' Volcano Plot for EWSR1-FLI1 knock-down vs control',
+                labSize = 2, pointSize = 3.0)
+
+#heatmap for upregulated genes
+upregular1 <- df_dseq %>%
+  mutate(gene_expression = df_dseq$log2FoldChange >0.1 & df_dseq$padj <0.05)%>%
+  filter(gene_expression == TRUE) %>%
+  arrange(desc(.$padj)) %>%
+  distinct(gene_id, .keep_all = TRUE)%>%
+  drop_na(gene_id) %>%
+  .[1:10,]
+rownames(upregular1)
+
+temp1_dseqobj <- filter_dseqobj
+rownames(temp1_dseqobj)<- df_dseq$ENSEMBL
+temp1_dseqobj
+nr_counts <- counts(temp1_dseqobj,normalized = T)[rownames(upregular1),]
+nr_counts2 <- t(apply(nr_counts,1,scale))
+colnames(nr_counts2) <- rownames(condition_data)
+
+up_genes <- merge(nr_counts2,upregular1$gene_id, by = 0) %>%
+  `rownames<-`(.$y)
+#silicing the sample columns
+up_genes <- up_genes[2:8]
+colnames(up_genes)
+
+#plotting upregulated heat map
+pheatmap(up_genes,scale = 'row',main = "Upregulated Genes",cluster_rows = F,cluster_cols = F )
+
+
+#heatmap for downregulated genes
+
+downregular1 <- df_dseq %>%
+  mutate(gene_expression = df_dseq$log2FoldChange < 0.1 & df_dseq$padj <0.05)%>%
+  filter(gene_expression == TRUE) %>%
+  arrange(.$padj) %>%
+  distinct(gene_id, .keep_all = TRUE)%>%
+  drop_na(gene_id) %>%
+  .[1:10,]
+
+downregular1
+
+nr_counts <- counts(temp1_dseqobj,normalized = T)[rownames(downregular1),]
+nr_counts2 <- t(apply(nr_counts,1,scale))
+colnames(nr_counts2) <- rownames(condition_data)
+
+down_genes <- merge(nr_counts2,downregular1$gene_id, by = 0) %>%
+  `rownames<-`(.$y)
+down_genes <- down_genes[2:8]
+#plotting upregulated heat map
+pheatmap(down_genes,scale = 'row',main = "Downregulated Genes",cluster_rows = F,cluster_cols = F )
