@@ -1,0 +1,123 @@
+---
+title: "rna_seq_ana"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+## installing required packages required!
+```
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+  BiocManager::install('org.Hs.eg.db')
+  BiocManager::install('AnnotationDbi')
+  BiocManager::install("dplyr")
+  BiocManager::install("SummarizedEzperiment")
+  BiocManager::install("DESeq2")
+  BiocManager::install("pheatmap")
+  BiocManager::install("EnhancedVolcano")
+  BiocManager::install("clusterProfiler")
+  BiocManager::install("enrichplot")
+  BiocManager::install("apeglm")
+  ```
+
+## including required libraries/packages
+```  
+library(apeglm)
+library(dplyr)
+library(SummarizedExperiment)
+library(DESeq2)
+library(pheatmap)
+library(EnhancedVolcano)
+library(org.Hs.eg.db)
+library(kableExtra)
+library(ggplot2)
+library(clusterProfiler)
+library(enrichplot)
+library(DOSE)
+library(ggridges)
+library(tidyverse)
+library(pathview)
+library(DESeq2)
+```
+
+
+> RNA-seq data of Ewing sarcoma(pediatric bone cancer which arises from the fusion of the EWSR1 and FLI1 genes) was used for this analysis 
+Data was downloaded form [here!](https://github.com/Bioinformatics-Research-Network/skill-assessments/blob/main/RNA-Seq%20Analysis/README.md)
+metadata:conditions-> Control(shCTRL) and EWSR1-FLI1 knockdown(shEF1)
+
+
+## Data is of object type:rangedsummarizedexperiment data 
+
+```{r rse,error=FALSE,warning=FALSE,message=FALSE}
+rse <- readRDS("EwS.rds")
+rse
+```
+
+## assay function extracts the primary assay data from rds
+```{r}
+primary_countsdata <- assay(rse)
+dim(primary_countsdata)
+```
+### counts data preview
+```{r}
+head(primary_countsdata)
+```
+
+
+## colData accessing all the meta data
+```{r}
+meta_data <- data.frame(colData(rse))
+meta_data
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
