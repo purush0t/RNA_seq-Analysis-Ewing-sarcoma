@@ -63,7 +63,7 @@ head(filtered_counts_data )
 
 dim(filtered_counts_data)
 
-#check if all the sam
+#checking if all the sample values are same
 all(rownames(condition_data) %in% colnames(filtered_counts_data))
 
 
